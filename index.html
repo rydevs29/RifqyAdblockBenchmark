@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rifqy AdBlock Benchmark</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;800&display=swap');
+        
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #020617;
+            background-image: radial-gradient(circle at 50% -20%, #1e293b, #020617);
+            min-height: 100vh;
+        }
+
+        .glass-card {
+            background: rgba(30, 41, 59, 0.5);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .score-gradient {
+            background: linear-gradient(135deg, #22c55e 0%, #10b981 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .pulse-active {
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+            border-color: #3b82f6;
+        }
+
+        .loading-dot {
+            animation: blink 1s infinite;
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 1; }
+        }
+    </style>
+</head>
+<body class="text-slate-200 p-6">
+
+    <div class="max-w-4xl mx-auto">
+        <header class="text-center mb-12">
+            <h1 class="text-4xl font-extrabold tracking-tight mb-2">RIFQY <span class="text-blue-500">AD-AUDIT</span></h1>
+            <p class="text-slate-400">Analisis efisiensi pemblokiran iklan secara real-time</p>
+        </header>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+            <div class="md:col-span-1 glass-card rounded-3xl p-8 text-center flex flex-col justify-center">
+                <h3 class="text-sm font-semibold uppercase tracking-widest text-slate-500 mb-2">Overall Score</h3>
+                <div id="main-score" class="text-7xl font-extrabold score-gradient mb-4">0%</div>
+                <button onclick="runTests()" class="bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 px-6 rounded-xl transition-all active:scale-95 shadow-lg shadow-blue-900/20">
+                    Mulai Tes
+                </button>
+            </div>
+
+            <div class="md:col-span-2 glass-card rounded-3xl p-8 grid grid-cols-2 gap-4">
+                <div class="bg-slate-800/50 p-4 rounded-2xl">
+                    <p class="text-slate-400 text-xs uppercase mb-1">Total Target</p>
+                    <p id="stat-total" class="text-2xl font-bold">-</p>
+                </div>
+                <div class="bg-slate-800/50 p-4 rounded-2xl">
+                    <p class="text-slate-400 text-xs uppercase mb-1">Terblokir</p>
+                    <p id="stat-blocked" class="text-2xl font-bold text-red-400">-</p>
+                </div>
+                <div class="bg-slate-800/50 p-4 rounded-2xl">
+                    <p class="text-slate-400 text-xs uppercase mb-1">Status Keamanan</p>
+                    <p id="stat-security" class="text-sm font-bold mt-1 text-blue-400">Menunggu...</p>
+                </div>
+                <div class="bg-slate-800/50 p-4 rounded-2xl">
+                    <p class="text-slate-400 text-xs uppercase mb-1">Browser Engine</p>
+                    <p id="stat-engine" class="text-sm font-bold mt-1">Detecting...</p>
+                </div>
+            </div>
+        </div>
+
+        <div id="results-area" class="space-y-4">
+            <div class="text-center text-slate-600 py-10 border-2 border-dashed border-slate-800 rounded-3xl">
+                Klik "Mulai Tes" untuk menjalankan simulasi benchmark
+            </div>
+        </div>
+    </div>
+
+    <script src="ads.js"></script>
+
+    <script>
+        // Info Engine Sederhana
+        document.getElementById('stat-engine').innerText = navigator.userAgent.split(' ').pop();
+
+        async function runTests() {
+            const resultsArea = document.getElementById('results-area');
+            const scoreDisplay = document.getElementById('main-score');
+            resultsArea.innerHTML = '';
+            
+            if (typeof testGroups === 'undefined') {
+                alert("Database ads.js belum siap!");
+                return;
+            }
+
+            let totalItems = 0;
+            let totalBlocked = 0;
+            
+            // Hitung total dulu
+            Object.values(testGroups).forEach(g => totalItems += g.length);
+            document.getElementById('stat-total').innerText = totalItems;
+
+            for (const [groupName, urls] of Object.entries(testGroups)) {
+                let groupBlocked = 0;
+                
+                // Buat Card untuk Grup
+                const card = document.createElement('div');
+                card.className = 'glass-card rounded-2xl p-6 transition-all duration-500';
+                card.id = `card-${groupName}`;
+                card.innerHTML = `
+                    <div class="flex justify-between items-center mb-4">
+                        <h4 class="font-bold text-lg">${groupName}</h4>
+                        <span id="pct-${groupName}" class="bg-slate-800 px-3 py-1 rounded-full text-xs font-mono">0%</span>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[10px] font-mono opacity-60" id="list-${groupName}">
+                    </div>
+                `;
+                resultsArea.appendChild(card);
+                card.classList.add('pulse-active');
+
+                for (const url of urls) {
+                    const statusDot = document.createElement('div');
+                    statusDot.className = 'flex items-center gap-2';
+                    
+                    try {
+                        const controller = new AbortController();
+                        const tid = setTimeout(() => controller.abort(), 2000);
+                        await fetch(url, { mode: 'no-cors', cache: 'no-store', signal: controller.signal });
+                        clearTimeout(tid);
+                        statusDot.innerHTML = `<span class="text-green-500">●</span> ${url.split('/')[2]}`;
+                    } catch (e) {
+                        groupBlocked++;
+                        totalBlocked++;
+                        statusDot.innerHTML = `<span class="text-red-500">×</span> ${url.split('/')[2]}`;
+                    }
+                    
+                    document.getElementById(`list-${groupName}`).appendChild(statusDot);
+                    
+                    // Update Persentase Real-time
+                    let overall = Math.round((totalBlocked / totalItems) * 100);
+                    scoreDisplay.innerText = overall + "%";
+                    document.getElementById('stat-blocked').innerText = totalBlocked;
+                }
+
+                document.getElementById(`pct-${groupName}`).innerText = Math.round((groupBlocked / urls.length) * 100) + "%";
+                card.classList.remove('pulse-active');
+                
+                // Update Security Status
+                const secStatus = document.getElementById('stat-security');
+                if(totalBlocked/totalItems > 0.8) { secStatus.innerText = "Sangat Kuat"; secStatus.className = "text-sm font-bold mt-1 text-green-400"; }
+                else if(totalBlocked/totalItems > 0.4) { secStatus.innerText = "Moderat"; secStatus.className = "text-sm font-bold mt-1 text-yellow-400"; }
+                else { secStatus.innerText = "Lemah"; secStatus.className = "text-sm font-bold mt-1 text-red-400"; }
+            }
+        }
+    </script>
+</body>
+</html>
