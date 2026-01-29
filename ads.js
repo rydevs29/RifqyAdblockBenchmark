@@ -1,14 +1,30 @@
 const testGroups = {
     "Advertising": [
-        "https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js",
+        "https://pagead2.googlesyndication.com",
+        "https://pagead2.googleadservices.com",
+        "https://afs.googlesyndication.com",
         "https://adservice.google.com/adsid/integrator.js",
         "https://z-na.amazon-adsystem.com/widgets/onejs",
         "https://static.ads-twitter.com/uwt.js",
+        "https://adtago.s3.amazonaws.com",
+        "https://analyticsengine.s3.amazonaws.com",
+        "https://analytics.s3.amazonaws.com",
+        "https://advice-ads.s3.amazonaws.com",
+        "https://stats.g.doubleclick.net",
+        "https://ad.doubleclick.net",
+        "https://static.doubleclick.net",
+        "https://m.doubleclick.net",
+        "https://adservice.google.com",
+        "https://mediavisor.doubleclick.net",
         "https://securepubads.g.doubleclick.net/tag/js/gpt.js"
     ],
     "Analytics & Tracking": [
         "https://www.google-analytics.com/analytics.js",
         "https://static.hotjar.com/c/hotjar.js",
+        "https://analytics.google.com",
+        "https://click.googleanalytics.com",
+        "https://google-analytics.com",
+        "https://ssl.google-analytics.com",
         "https://cdn.mouseflow.com/projects/test.js",
         "https://mc.yandex.ru/metrika/tag.js"
     ],
